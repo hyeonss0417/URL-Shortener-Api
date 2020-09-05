@@ -5,7 +5,7 @@ const {
   isEmptyResult,
   checkUrlLength,
   getUniqueUrlKey,
-} = require("../utils/urlsUtil");
+} = require("../utils");
 const CustomError = require("../customError");
 
 const urls = express.Router();

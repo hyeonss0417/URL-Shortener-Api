@@ -1,7 +1,7 @@
-const { getPool } = require("../../database/dbcon");
+const { getPool } = require("../database/dbcon");
 const pool = getPool();
 
-const CustomError = require("../customError");
+const CustomError = require("./customError");
 
 const dbConnectionHandler = async (req, res, next) => {
   try {
@@ -30,12 +30,7 @@ const serverErrorHandler = (err, req, res, next) => {
   }
 };
 
-const throwServerErrorWhen = (condition, code, status, description) => {
-  if (condition) throw new CustomError(code, status, description);
-};
-
 module.exports = {
   serverErrorHandler,
   dbConnectionHandler,
-  throwServerErrorWhen,
 };

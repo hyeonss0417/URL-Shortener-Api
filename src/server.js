@@ -2,7 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const router = require("./routes/router");
 const timeout = require("connect-timeout");
-const { serverErrorHandler, dbConnectionHandler } = require("./utils/utils");
+const {
+  serverErrorHandler,
+  dbConnectionHandler,
+} = require("./customMiddleware");
 
 const app = express();
 app.set("port", process.env.PORT || 3000);
