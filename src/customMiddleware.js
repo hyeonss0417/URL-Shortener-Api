@@ -1,4 +1,4 @@
-const { getPool } = require("../database/dbcon");
+const { getPool } = require("../config/database");
 const CustomError = require("./customError");
 
 const pool = getPool();

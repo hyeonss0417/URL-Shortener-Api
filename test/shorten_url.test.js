@@ -4,9 +4,10 @@ const chaiHttp = require("chai-http");
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-const app = require("../src/server");
+const app = require("../app");
 
 const testUrl = "https://www.google.co.kr/";
+const nonExistentKey = "iwejgklnbqwj";
 let shortKey;
 let call_cnt = 0;
 
@@ -77,14 +78,14 @@ describe("[Test] Redirect URL", () => {
       });
   });
 
-  it("GET /:key 400 -  Nonexistent URL", function (done) {
+  it("GET /:key 404 -  Nonexistent URL", function (done) {
     this.timeout(2000);
     chai
       .request(app)
-      .get(`/urls/iwejgklnbqwjiroqjfklejdoisj`)
+      .get(`/urls/${nonExistentKey}`)
       .end((err, res) => {
         expect(err).to.be.not.ok;
-        expect(res).to.have.status(400);
+        expect(res).to.have.status(404);
         expect(res).to.be.json;
         expect(res.body.error).to.be.equal("NO_RESULT");
         done();
@@ -103,7 +104,7 @@ describe("[Test] URL Statistic", () => {
         expect(err).to.be.not.ok;
         expect(res).to.have.status(200);
         expect(res).to.be.json;
-        expect(res.body.call_count).to.be.equal(call_cnt);
+        expect(res.body.callCount).to.be.equal(call_cnt);
         done();
       });
   });
@@ -130,7 +131,7 @@ describe("[Test] URL Statistic", () => {
         expect(err).to.be.not.ok;
         expect(res).to.have.status(200);
         expect(res).to.be.json;
-        expect(res.body.call_count).to.be.equal(call_cnt);
+        expect(res.body.callCount).to.be.equal(call_cnt);
         done();
       });
   });
@@ -157,7 +158,21 @@ describe("[Test] URL Statistic", () => {
         expect(err).to.be.not.ok;
         expect(res).to.have.status(200);
         expect(res).to.be.json;
-        expect(res.body.call_count).to.be.equal(call_cnt);
+        expect(res.body.callCount).to.be.equal(call_cnt);
+        done();
+      });
+  });
+
+  it("GET /:key/stat 404 - Nonexistent URL", function (done) {
+    this.timeout(2000);
+    chai
+      .request(app)
+      .get(`/urls/${nonExistentKey}/stat`)
+      .end((err, res) => {
+        expect(err).to.be.not.ok;
+        expect(res).to.have.status(404);
+        expect(res).to.be.json;
+        expect(res.body.error).to.be.equal("NO_RESULT");
         done();
       });
   });

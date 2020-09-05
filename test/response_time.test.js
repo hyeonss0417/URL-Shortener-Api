@@ -4,7 +4,7 @@ const chaiHttp = require("chai-http");
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-const app = require("../src/server");
+const app = require("../app");
 
 describe("[Test] Response Time", () => {
   it("returns 200 (within 1000 ms)", function (done) {
