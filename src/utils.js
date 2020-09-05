@@ -4,11 +4,13 @@ const generateShortKey = () => {
 
 const getUniqueURLKey = async (conn) => {
   const chkUrlDuplicateSql = "SELECT url_id from urls WHERE short_key = ?";
-  while (true) {
+  const tryNum = 20;
+  for (let i = 0; i < tryNum; i++) {
     const newKey = generateShortKey();
     const [rows] = await conn.query(chkUrlDuplicateSql, newKey);
     if (rows.length === 0) return newKey;
   }
+  throw Error("Couldn't get unique url key.");
 };
 
 const isValidUrl = (url) => {
