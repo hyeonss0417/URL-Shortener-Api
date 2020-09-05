@@ -44,6 +44,12 @@ urls.post("/", timeout(3000), async (req, res, next) => {
   }
 
   const newKey = await getUniqueUrlKey(res.conn);
+  if (newKey === "") {
+    return next(
+      new CustomError("GENERIC", 500, "Couldn't get unique url key.")
+    );
+  }
+
   res.conn.query(insertSql, [originUrl, newKey]);
   res.status(200).json({ shortUrl: `localhost:3000/${newKey}` });
 });

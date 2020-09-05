@@ -10,7 +10,7 @@ const getUniqueUrlKey = async (conn) => {
     const [rows] = await conn.query(chkUrlDuplicateSql, newKey);
     if (rows.length === 0) return newKey;
   }
-  throw Error("Couldn't get unique url key.");
+  return "";
 };
 
 const isValidUrl = (url) => {
