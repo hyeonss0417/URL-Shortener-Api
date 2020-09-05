@@ -13,14 +13,14 @@ const urls = express.Router();
 urls.get("/:key", async (req, res, next) => {
   const shortKey = req.params.key;
   const getOriginUrlSql = `SELECT origin_url from urls WHERE short_key = ?`;
-  const increaseCallCount = `UPDATE urls SET call_count = call_count + 1 WHERE short_key = ?`;
+  const increaseCallCountSql = `UPDATE urls SET call_count = call_count + 1 WHERE short_key = ?`;
 
   const [rows] = await res.conn.query(getOriginUrlSql, shortKey);
 
   if (isEmptyResult(rows)) {
     return next(new CustomError("NO_RESULT", 400, "This url does not exist."));
   } else {
-    await res.conn.query(increaseCallCount, shortKey);
+    await res.conn.query(increaseCallCountSql, shortKey);
     res.redirect(rows[0].origin_url);
   }
 });

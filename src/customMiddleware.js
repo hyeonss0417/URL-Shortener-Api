@@ -1,7 +1,7 @@
 const { getPool } = require("../database/dbcon");
-const pool = getPool();
-
 const CustomError = require("./customError");
+
+const pool = getPool();
 
 const dbConnectionHandler = async (req, res, next) => {
   try {
