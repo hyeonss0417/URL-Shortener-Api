@@ -2,7 +2,7 @@ const generateShortKey = () => {
   return Math.random().toString(36).substr(6).toUpperCase();
 };
 
-const getUniqueKey = async (conn) => {
+const getUniqueURLKey = async (conn) => {
   const chkUrlDuplicateSql = "SELECT url_id from urls WHERE short_key = ?";
   while (true) {
     const newKey = generateShortKey();
@@ -23,7 +23,7 @@ const handleServerError = (err, res) => {
 
 module.exports = {
   generateShortKey,
-  getUniqueKey,
+  getUniqueURLKey,
   isValidUrl,
   handleServerError,
 };
