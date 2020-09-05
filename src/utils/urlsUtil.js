@@ -2,7 +2,7 @@ const generateShortKey = () => {
   return Math.random().toString(36).substr(6).toUpperCase();
 };
 
-const getUniqueURLKey = async (conn) => {
+const getUniqueUrlKey = async (conn) => {
   const chkUrlDuplicateSql = "SELECT url_id from urls WHERE short_key = ?";
   const tryNum = 20;
   for (let i = 0; i < tryNum; i++) {
@@ -18,14 +18,16 @@ const isValidUrl = (url) => {
   return urlRegex.test(url);
 };
 
-const handleServerError = (err, res) => {
-  console.error(err);
-  res.status(500).json({ message: "Server Error!" });
+const checkUrlLength = (url) => {
+  return url.length < 500;
 };
+
+const isEmptyResult = (rows) => rows.length === 0;
 
 module.exports = {
   generateShortKey,
-  getUniqueURLKey,
+  getUniqueUrlKey,
   isValidUrl,
-  handleServerError,
+  isEmptyResult,
+  checkUrlLength,
 };
