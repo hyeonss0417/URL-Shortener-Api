@@ -10,10 +10,6 @@ app.set("port", process.env.PORT || 3000);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// app.use((req, res, next) => {
-//   res.setTimeout(30, () => res.send(408));
-//   next();
-// });
 app.use(timeout(8000));
 
 app.use((req, res, next) => {
