@@ -1,3 +1,4 @@
+require("../src/env");
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 
@@ -8,8 +9,46 @@ const app = require("../app");
 
 const testUrl = "https://www.google.co.kr/";
 const nonExistentKey = "iwejgklnbqwj";
+const testStartTime = Date.now() - 1000;
+
 let shortKey;
 let call_cnt = 0;
+
+const assertRedirection = (done) => {
+  chai
+    .request(app)
+    .get(`/urls/${shortKey}`)
+    .end((err, res) => {
+      expect(err).to.be.not.ok;
+      expect(res.redirects[0]).to.be.equal(testUrl);
+      call_cnt++;
+      done();
+    });
+};
+
+const assertUrlStatistics = (done) => {
+  chai
+    .request(app)
+    .get(`/urls/${shortKey}/stat`)
+    .end((err, res) => {
+      expect(err).to.be.not.ok;
+      expect(res).to.have.status(200);
+      expect(res).to.be.json;
+      expect(res.body.origin_url).to.be.deep.equal(testUrl);
+      expect(new Date(res.body.created_date).getTime()).to.be.greaterThan(
+        testStartTime
+      );
+      expect(res.body.short_url).to.be.equal(
+        `${process.env.DOMAIN_NAME}:${process.env.PORT}/${shortKey}`
+      );
+      expect(res.body.call_count).to.be.equal(call_cnt);
+      expect(res.body.call_logs).to.have.lengthOf(call_cnt);
+      res.body.call_logs.forEach((call_date) => {
+        expect(new Date(call_date).getTime()).to.be.greaterThan(testStartTime);
+      });
+      done();
+    });
+};
 
 //##### Shorten URL
 describe("[Test] Shorten URL", () => {
@@ -23,8 +62,8 @@ describe("[Test] Shorten URL", () => {
         expect(err).to.be.not.ok;
         expect(res).to.have.status(200);
         expect(res).to.be.json;
-        expect(res.body.shortUrl).to.be.not.undefined;
-        shortKey = res.body.shortUrl.split("/")[1];
+        expect(res.body.short_url).to.be.not.undefined;
+        shortKey = res.body.short_url.split("/")[1];
         done();
       });
   });
@@ -67,15 +106,7 @@ describe("[Test] Shorten URL", () => {
 describe("[Test] Redirect URL", () => {
   it("GET /:key 200 - Redirection", function (done) {
     this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${shortKey}`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res.redirects[0]).to.be.equal(testUrl);
-        call_cnt++;
-        done();
-      });
+    assertRedirection(done);
   });
 
   it("GET /:key 404 -  Nonexistent URL", function (done) {
@@ -93,74 +124,31 @@ describe("[Test] Redirect URL", () => {
   });
 });
 
-//#### URL Statistic
+//#### Get URL Statistics
 describe("[Test] URL Statistic", () => {
   it("GET /:key/stat 200 - call_count should be 1", function (done) {
     this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${shortKey}/stat`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(200);
-        expect(res).to.be.json;
-        expect(res.body.callCount).to.be.equal(call_cnt);
-        done();
-      });
+    assertUrlStatistics(done);
   });
 
   it("Call Again", function (done) {
     this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${shortKey}`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res.redirects[0]).to.be.equal(testUrl);
-        call_cnt++;
-        done();
-      });
+    assertRedirection(done);
   });
 
   it("GET /:key/stat 200 - call_count should be 2", function (done) {
     this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${shortKey}/stat`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(200);
-        expect(res).to.be.json;
-        expect(res.body.callCount).to.be.equal(call_cnt);
-        done();
-      });
+    assertUrlStatistics(done);
   });
 
   it("Call Again", function (done) {
     this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${shortKey}`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res.redirects[0]).to.be.equal(testUrl);
-        call_cnt++;
-        done();
-      });
+    assertRedirection(done);
   });
 
   it("GET /:key/stat 200 - call_count should be 3", function (done) {
     this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${shortKey}/stat`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(200);
-        expect(res).to.be.json;
-        expect(res.body.callCount).to.be.equal(call_cnt);
-        done();
-      });
+    assertUrlStatistics(done);
   });
 
   it("GET /:key/stat 404 - Nonexistent URL", function (done) {

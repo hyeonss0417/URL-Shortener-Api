@@ -1,9 +1,10 @@
+require("../src/env");
 const mysql = require("mysql2/promise");
 const dbconfig = {
-  host: "localhost",
-  user: "root",
-  password: "phaphaya",
-  database: "my_db",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DD_PASSWORD,
+  database: process.env.DB_DATABASE,
 };
 
 let pool;

@@ -1,3 +1,4 @@
+require("./src/env");
 const express = require("express");
 const bodyParser = require("body-parser");
 const timeout = require("connect-timeout");
@@ -8,7 +9,6 @@ const {
 const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUI = require("swagger-ui-express");
 const swaggerOptions = require("./config/swagger.def");
-const urls = require("./src/api/urls");
 const router = require("./src/router");
 
 const app = express();
@@ -31,7 +31,9 @@ app.use("/", router);
 app.use(serverErrorHandler);
 
 app.listen(app.get("port"), () => {
-  console.log("Express server listening on port " + app.get("port"));
+  console.log(
+    `Express server listening on ${process.env.DOMAIN_NAME}:${app.get("port")}`
+  );
 });
 
 module.exports = app;

@@ -1,3 +1,4 @@
+require("../env");
 const express = require("express");
 const timeout = require("connect-timeout");
 const {
@@ -13,7 +14,7 @@ const CustomError = require("../customError");
  * tags:
  *  name: URL
  * definitions:
- *  URL:
+ *  urls:
  *        type: object
  *        properties:
  *            url_id:
@@ -25,9 +26,21 @@ const CustomError = require("../customError");
  *            short_key:
  *                    type: string
  *                    description: 원래 url에 접근하기 위한 key (단축된 url)
- *            call_count:
+ *            created_date:
+ *                    type: date
+ *                    description: 단축 URL이 생긴 시간.
+ *  url_logs:
+ *        type: object
+ *        properties:
+ *            id:
  *                    type: number
- *                    description: 단축 url이 눌린 횟수.
+ *                    description: log의 id
+ *            url_id:
+ *                    type: number
+ *                    description: 호출된 url의 id
+ *            call_date:
+ *                    type: date
+ *                    description: 호출된 시간
  */
 
 const urls = express.Router();
@@ -65,15 +78,15 @@ const urls = express.Router();
  */
 urls.get("/:key", async (req, res, next) => {
   const shortKey = req.params.key;
-  const getOriginUrlSql = `SELECT origin_url from urls WHERE short_key = ?`;
-  const increaseCallCountSql = `UPDATE urls SET call_count = call_count + 1 WHERE short_key = ?`;
+  const getOriginUrlSql = `SELECT url_id, origin_url from urls WHERE short_key = ?`;
+  const createLogSql = `INSERT INTO url_logs (url_id) VALUES (?)`;
 
   const [rows] = await res.conn.query(getOriginUrlSql, shortKey);
 
   if (isEmptyResult(rows)) {
     return next(new CustomError("NO_RESULT", 404, "This url does not exist."));
   } else {
-    await res.conn.query(increaseCallCountSql, shortKey);
+    await res.conn.query(createLogSql, rows[0].url_id);
     res.redirect(rows[0].origin_url);
   }
 });
@@ -101,7 +114,7 @@ urls.get("/:key", async (req, res, next) => {
  *              schema:
  *                  type: object
  *                  properties:
- *                       shortUrl:
+ *                       short_url:
  *                          type: number
  *                          example: https://{domainName}/{newKey}
  *          400:
@@ -153,7 +166,9 @@ urls.post("/", timeout(3000), async (req, res, next) => {
   }
 
   res.conn.query(insertSql, [originUrl, newKey]);
-  res.status(200).json({ shortUrl: `localhost:3000/${newKey}` });
+  res.status(200).json({
+    short_url: `${process.env.DOMAIN_NAME}:${process.env.PORT}/${newKey}`,
+  });
 });
 
 /**
@@ -175,9 +190,21 @@ urls.post("/", timeout(3000), async (req, res, next) => {
  *              schema:
  *                  type: object
  *                  properties:
- *                       callCount:
+ *                       origin_url:
+ *                          type: string
+ *                          example: https://google.com
+ *                       created_date:
+ *                          type: date
+ *                          example: 2020-09-06T10:39:29.000Z
+ *                       short_url:
+ *                          type: string
+ *                          example: domain-name/urls/1CiFQ9
+ *                       call_count:
  *                          type: number
  *                          example: 2
+ *                       call_logs:
+ *                          type: list
+ *                          example: [2020-09-06T10:39:29.000Z, 2020-09-06T10:39:39.000Z, 2020-09-06T10:39:40.000Z]
  *          404:
  *              description: 존재하지 않는 URL 키 값으로 시도한 경우
  *              schema:
@@ -192,13 +219,24 @@ urls.post("/", timeout(3000), async (req, res, next) => {
  */
 urls.get("/:key/stat", async (req, res, next) => {
   const shortKey = req.params.key;
-  const sql = `SELECT call_count from urls WHERE short_key = ?`;
-  const [rows] = await res.conn.query(sql, shortKey);
+  const getUrlInfoSql = `SELECT url_id, origin_url, created_date 
+                          FROM urls WHERE short_key = ?`;
+  const getUrlLogsSql = `SELECT call_date FROM url_logs WHERE url_id = ?`;
 
-  if (isEmptyResult(rows)) {
+  const [urlInfoRows] = await res.conn.query(getUrlInfoSql, shortKey);
+  if (isEmptyResult(urlInfoRows)) {
     return next(new CustomError("NO_RESULT", 404, "This url does not exist."));
   }
-  res.status(200).json({ callCount: rows[0].call_count });
+
+  const { url_id, origin_url, created_date } = urlInfoRows[0];
+  const [logRows] = await res.conn.query(getUrlLogsSql, url_id);
+  res.status(200).json({
+    origin_url,
+    created_date,
+    short_url: `${process.env.DOMAIN_NAME}:${process.env.PORT}/${shortKey}`,
+    call_count: logRows.length,
+    call_logs: logRows.map((item) => item.call_date),
+  });
 });
 
 module.exports = urls;
