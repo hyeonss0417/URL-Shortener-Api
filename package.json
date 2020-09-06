@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./app.js",
-    "test": "./node_modules/mocha/bin/mocha"
+    "test": "mocha --exit --timeout 3000 ./test/**/*.test.js"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
     "connect-timeout": "^1.9.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "mocha-cli": "^1.0.1",
     "mysql": "^2.18.1",
     "mysql2": "^2.1.0",
     "path": "^0.12.7",

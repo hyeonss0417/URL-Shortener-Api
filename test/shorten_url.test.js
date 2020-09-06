@@ -50,118 +50,105 @@ const assertUrlStatistics = (done) => {
     });
 };
 
-//##### Shorten URL
-describe("[Test] Shorten URL", () => {
-  it("POST / 200 - Success", function (done) {
-    this.timeout(2000);
-    chai
-      .request(app)
-      .post("/urls")
-      .send({ url: testUrl })
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(200);
-        expect(res).to.be.json;
-        expect(res.body.short_url).to.be.not.undefined;
-        shortKey = res.body.short_url.split("/")[1];
-        done();
-      });
+describe("[Test] URL Shortener API", () => {
+  //##### Shorten URL
+  context("POST /urls - Shorten URL", () => {
+    it("should return 200.", function (done) {
+      chai
+        .request(app)
+        .post("/urls")
+        .send({ url: testUrl })
+        .end((err, res) => {
+          expect(err).to.be.not.ok;
+          expect(res).to.have.status(200);
+          expect(res).to.be.json;
+          expect(res.body.short_url).to.be.not.undefined;
+          shortKey = res.body.short_url.split("/")[1];
+          done();
+        });
+    });
+
+    it("should return 400. (Not url pattern)", function (done) {
+      chai
+        .request(app)
+        .post("/urls")
+        .send({ url: "://www.google.co.kr/" })
+        .end((err, res) => {
+          expect(err).to.be.not.ok;
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body.error).to.be.equal("WRONG_REQUEST");
+          done();
+        });
+    });
+
+    it("should return 400. (Too long url)", function (done) {
+      chai
+        .request(app)
+        .post("/urls")
+        .send({
+          url:
+            "http://www.google.co.kr/jfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfas",
+        })
+        .end((err, res) => {
+          expect(err).to.be.not.ok;
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body.error).to.be.equal("WRONG_REQUEST");
+          done();
+        });
+    });
   });
 
-  it("POST / 400 - Not Url Pattern", function (done) {
-    this.timeout(2000);
-    chai
-      .request(app)
-      .post("/urls")
-      .send({ url: "://www.google.co.kr/" })
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(400);
-        expect(res).to.be.json;
-        expect(res.body.error).to.be.equal("WRONG_REQUEST");
-        done();
-      });
+  //##### Redirect URL
+  context("GET /urls/:key - Redirect URL", () => {
+    it("should return 200. (Redirection)", function (done) {
+      assertRedirection(done);
+    });
+
+    it("should return 404. (Nonexistent URL)", function (done) {
+      chai
+        .request(app)
+        .get(`/urls/${nonExistentKey}`)
+        .end((err, res) => {
+          expect(err).to.be.not.ok;
+          expect(res).to.have.status(404);
+          expect(res).to.be.json;
+          expect(res.body.error).to.be.equal("NO_RESULT");
+          done();
+        });
+    });
   });
 
-  it("POST / 400 - Too long Url", function (done) {
-    this.timeout(2000);
-    chai
-      .request(app)
-      .post("/urls")
-      .send({
-        url:
-          "http://www.google.co.kr/jfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfasjfdsoifjsdafkldsjfoiqejflkejfoijfas",
-      })
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(400);
-        expect(res).to.be.json;
-        expect(res.body.error).to.be.equal("WRONG_REQUEST");
-        done();
-      });
-  });
-});
+  //#### Get URL Statistics
+  context("GET /:key/stat - URL Statistic", () => {
+    beforeEach("Visit the url.", function (done) {
+      assertRedirection(done);
+    });
 
-//##### Redirect URL
-describe("[Test] Redirect URL", () => {
-  it("GET /:key 200 - Redirection", function (done) {
-    this.timeout(2000);
-    assertRedirection(done);
-  });
+    it("should return 200 (call_count should be 2)", function (done) {
+      assertUrlStatistics(done);
+    });
 
-  it("GET /:key 404 -  Nonexistent URL", function (done) {
-    this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${nonExistentKey}`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(404);
-        expect(res).to.be.json;
-        expect(res.body.error).to.be.equal("NO_RESULT");
-        done();
-      });
-  });
-});
+    it("should return 200 (call_count should be 3)", function (done) {
+      assertUrlStatistics(done);
+    });
 
-//#### Get URL Statistics
-describe("[Test] URL Statistic", () => {
-  it("GET /:key/stat 200 - call_count should be 1", function (done) {
-    this.timeout(2000);
-    assertUrlStatistics(done);
-  });
+    it("should return 200 (call_count should be 4)", function (done) {
+      assertUrlStatistics(done);
+    });
 
-  it("Call Again", function (done) {
-    this.timeout(2000);
-    assertRedirection(done);
-  });
-
-  it("GET /:key/stat 200 - call_count should be 2", function (done) {
-    this.timeout(2000);
-    assertUrlStatistics(done);
-  });
-
-  it("Call Again", function (done) {
-    this.timeout(2000);
-    assertRedirection(done);
-  });
-
-  it("GET /:key/stat 200 - call_count should be 3", function (done) {
-    this.timeout(2000);
-    assertUrlStatistics(done);
-  });
-
-  it("GET /:key/stat 404 - Nonexistent URL", function (done) {
-    this.timeout(2000);
-    chai
-      .request(app)
-      .get(`/urls/${nonExistentKey}/stat`)
-      .end((err, res) => {
-        expect(err).to.be.not.ok;
-        expect(res).to.have.status(404);
-        expect(res).to.be.json;
-        expect(res.body.error).to.be.equal("NO_RESULT");
-        done();
-      });
+    it("GET /:key/stat 404 - Nonexistent URL", function (done) {
+      chai
+        .request(app)
+        .get(`/urls/${nonExistentKey}/stat`)
+        .end((err, res) => {
+          expect(err).to.be.not.ok;
+          expect(res).to.have.status(404);
+          expect(res).to.be.json;
+          expect(res.body.error).to.be.equal("NO_RESULT");
+          done();
+        });
+    });
   });
 });
